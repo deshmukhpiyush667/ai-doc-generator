@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — DocGen AI{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block topbar_actions %}
+  <a href="/chat/new" class="btn btn-ghost btn-sm" onclick="openNewChat(event)"><i class="fas fa-plus"></i> New Chat</a>
+  <a href="/documents/generate" class="btn btn-primary btn-sm"><i class="fas fa-file-plus"></i> New Document</a>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .stat-card::after {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle, var(--glow-c, var(--accent-glow)), transparent 70%);
+  }
+  .stat-icon {
+    width: 40px; height: 40px;
+    background: var(--icon-bg, var(--accent-glow));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--icon-c, var(--accent2));
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 13px; color: var(--muted2); }
+
+  .doc-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .doc-type-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--muted2);
+    transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .doc-type-btn i { font-size: 20px; color: var(--accent2); }
+  .doc-type-btn span { font-size: 12px; font-weight: 500; line-height: 1.3; }
+  .doc-type-btn:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--text); transform: translateY(-2px); }
+
+  .recent-list { display: flex; flex-direction: column; gap: 1px; }
+  .recent-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none; color: inherit;
+    transition: color 0.15s;
+  }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-item:hover .recent-title { color: var(--accent2); }
+  .recent-icon {
+    width: 34px; height: 34px; flex-shrink: 0;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent2); font-size: 13px;
+  }
+  .recent-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .recent-meta { font-size: 11px; color: var(--muted); }
+  .recent-arrow { margin-left: auto; color: var(--muted); font-size: 11px; }
+
+  .welcome-banner {
+    background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(192,132,252,0.08));
+    border: 1px solid rgba(124,106,247,0.2);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+    position: relative; overflow: hidden;
+  }
+  .welcome-banner::before {
+    content: '';
+    position: absolute; right: -40px; top: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(124,106,247,0.15), transparent 70%);
+  }
+  .welcome-text h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .welcome-text p { font-size: 14px; color: var(--muted2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+  <div class="welcome-text">
+    <h2>👋 Welcome back, {{ session.user_name }}!</h2>
+    <p>You have {{ chat_count }} saved chats and {{ doc_count }} documents generated.</p>
+  </div>
+  <a href="/documents/generate" class="btn btn-primary"><i class="fas fa-sparkles"></i> Generate Document</a>
+</div>
+
+<!-- Stats -->
+<div class="grid-3 mb-3">
+  <div class="stat-card" style="--glow-c: rgba(124,106,247,0.15); --icon-bg: rgba(124,106,247,0.12); --icon-c: #a78bfa;">
+    <div class="stat-icon"><i class="fas fa-message-dots"></i></div>
+    <div class="stat-value">{{ chat_count }}</div>
+    <div class="stat-label">Saved Chats</div>
+  </div>
+  <div class="stat-card" style="--glow-c: rgba(74,222,128,0.1); --icon-bg: rgba(74,222,128,0.1); --icon-c: #4ade80;">
+    <div class="stat-icon"><i class="fas fa-file-lines"></i></div>
+    <div class="stat-value">{{ doc_count }}</div>
+    <div class="stat-label">Documents Created</div>
+  </div>
+  <div class="stat-card" style="--glow-c: rgba(240,192,96,0.1); --icon-bg: rgba(240,192,96,0.1); --icon-c: #f0c060;">
+    <div class="stat-icon"><i class="fas fa-comments"></i></div>
+    <div class="stat-value">{{ msg_count }}</div>
+    <div class="stat-label">Total Messages</div>
+  </div>
+</div>
+
+<!-- Document Types + Recent -->
+<div class="grid-2">
+  <!-- Document Generator Panel -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-file-plus" style="color:var(--accent2)"></i> Generate a Document</div>
+    <div class="doc-type-grid">
+      <a href="/documents/generate?type=nda" class="doc-type-btn"><i class="fas fa-shield-halved"></i><span>NDA</span></a>
+      <a href="/documents/generate?type=resume" class="doc-type-btn"><i class="fas fa-id-card"></i><span>Resume / CV</span></a>
+      <a href="/documents/generate?type=invoice" class="doc-type-btn"><i class="fas fa-receipt"></i><span>Invoice</span></a>
+      <a href="/documents/generate?type=offer_letter" class="doc-type-btn"><i class="fas fa-envelope-open-text"></i><span>Offer Letter</span></a>
+      <a href="/documents/generate?type=cover_letter" class="doc-type-btn"><i class="fas fa-paper-plane"></i><span>Cover Letter</span></a>
+      <a href="/documents/generate?type=employment_contract" class="doc-type-btn"><i class="fas fa-file-contract"></i><span>Employment Contract</span></a>
+      <a href="/documents/generate?type=lease_agreement" class="doc-type-btn"><i class="fas fa-house"></i><span>Lease Agreement</span></a>
+      <a href="/documents/generate?type=partnership_agreement" class="doc-type-btn"><i class="fas fa-handshake"></i><span>Partnership Agreement</span></a>
+      <a href="/documents/generate?type=service_agreement" class="doc-type-btn"><i class="fas fa-gears"></i><span>Service Agreement</span></a>
+      <a href="/documents/generate?type=privacy_policy" class="doc-type-btn"><i class="fas fa-lock"></i><span>Privacy Policy</span></a>
+      <a href="/documents/generate?type=terms_of_service" class="doc-type-btn"><i class="fas fa-scale-balanced"></i><span>Terms of Service</span></a>
+      <a href="/documents/generate?type=memo" class="doc-type-btn"><i class="fas fa-memo"></i><span>Business Memo</span></a>
+      <a href="/documents/generate?type=business_plan" class="doc-type-btn"><i class="fas fa-chart-line"></i><span>Business Plan</span></a>
+      <a href="/documents/generate?type=proposal" class="doc-type-btn"><i class="fas fa-lightbulb"></i><span>Proposal</span></a>
+      <a href="/documents/generate?type=sow" class="doc-type-btn"><i class="fas fa-list-check"></i><span>Statement of Work</span></a>
+      <a href="/documents/generate?type=mou" class="doc-type-btn"><i class="fas fa-file-signature"></i><span>MOU</span></a>
+      <a href="/documents/generate?type=cease_desist" class="doc-type-btn"><i class="fas fa-ban"></i><span>Cease & Desist</span></a>
+      <a href="/documents/generate?type=press_release" class="doc-type-btn"><i class="fas fa-newspaper"></i><span>Press Release</span></a>
+      <a href="/documents/generate?type=meeting_minutes" class="doc-type-btn"><i class="fas fa-clipboard-list"></i><span>Meeting Minutes</span></a>
+      <a href="/documents/generate?type=performance_review" class="doc-type-btn"><i class="fas fa-star-half-stroke"></i><span>Performance Review</span></a>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <div class="card">
+      <div class="section-title"><i class="fas fa-clock-rotate-left" style="color:var(--accent2)"></i> Recent Chats</div>
+      {% if chats %}
+        <div class="recent-list">
+          {% for c in chats[:5] %}
+          <a href="/chat/{{ c.id }}" class="recent-item">
+            <div class="recent-icon"><i class="fas fa-message-dots"></i></div>
+            <div>
+              <div class="recent-title">{{ c.title }}</div>
+              <div class="recent-meta">{{ c.created_at[:10] }}</div>
+            </div>
+            <i class="fas fa-chevron-right recent-arrow"></i>
+          </a>
+          {% endfor %}
+        </div>
+        <a href="/chat" class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;justify-content:center;">View all chats</a>
+      {% else %}
+        <p class="text-muted">No chats yet. <a href="/chat" style="color:var(--accent2)">Start a conversation →</a></p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-file-lines" style="color:var(--accent2)"></i> Recent Documents</div>
+      {% if docs %}
+        <div class="recent-list">
+          {% for d in docs[:5] %}
+          <a href="/documents/{{ d.id }}" class="recent-item">
+            <div class="recent-icon"><i class="fas fa-file-lines"></i></div>
+            <div>
+              <div class="recent-title">{{ d.title }}</div>
+              <div class="recent-meta">{{ d.doc_type.replace('_',' ').title() }} · {{ d.created_at[:10] }}</div>
+            </div>
+            <i class="fas fa-chevron-right recent-arrow"></i>
+          </a>
+          {% endfor %}
+        </div>
+        <a href="/documents" class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;justify-content:center;">View all documents</a>
+      {% else %}
+        <p class="text-muted">No documents yet. <a href="/documents/generate" style="color:var(--accent2)">Generate one →</a></p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function openNewChat(e) {
+  e.preventDefault();
+  const title = prompt("Chat title (optional):", "New Chat");
+  if (title === null) return;
+  const form = document.createElement('form');
+  form.method = 'POST'; form.action = '/chat/new';
+  const input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'title'; input.value = title || 'New Chat';
+  form.appendChild(input); document.body.appendChild(form); form.submit();
+}
+</script>
+{% endblock %}

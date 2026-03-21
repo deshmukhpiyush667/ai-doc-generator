@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generated Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="card">
+    <h2>Generated Offer Letter</h2>
+
+    <pre style="text-align:left; white-space:pre-wrap;">
+{{ content }}
+    </pre>
+
+    <a href="/generate">Generate Another</a>
+    <a href="/dashboard">Back to Dashboard</a>
+</div>
+
+</body>
+</html>

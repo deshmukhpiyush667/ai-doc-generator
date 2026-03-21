@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Generate {{ doc_types[doc_type] }} — DocGen AI{% endblock %}
+{% block page_title %}Generate Document{% endblock %}
+{% block topbar_actions %}
+  <a href="/documents" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-left"></i> All Documents</a>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .gen-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+  .doc-type-list { display: flex; flex-direction: column; gap: 2px; }
+  .doc-type-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none; color: var(--muted2);
+    font-size: 13px; transition: all 0.12s;
+  }
+  .doc-type-option:hover { background: var(--surface2); color: var(--text); }
+  .doc-type-option.active { background: var(--accent-glow); color: var(--accent2); font-weight: 500; }
+  .doc-type-option i { width: 16px; text-align: center; font-size: 12px; flex-shrink: 0; }
+
+  .gen-form { }
+  .gen-header { margin-bottom: 24px; }
+  .gen-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .gen-desc { font-size: 14px; color: var(--muted2); }
+
+  .prompt-hints { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .prompt-hint {
+    padding: 4px 12px; border-radius: 20px;
+    border: 1px solid var(--border2); background: var(--surface2);
+    color: var(--muted2); font-size: 12px; cursor: pointer;
+    transition: all 0.12s;
+  }
+  .prompt-hint:hover { border-color: var(--accent); color: var(--accent2); }
+
+  textarea.form-input { min-height: 200px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gen-layout">
+
+  <!-- Doc Type Selector -->
+  <div class="card" style="padding:16px;height:fit-content;position:sticky;top:80px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 4px">Document Type</div>
+    <div class="doc-type-list">
+      {% set icons = {
+        'nda':'shield-halved','resume':'id-card','invoice':'receipt',
+        'offer_letter':'envelope-open-text','cover_letter':'paper-plane',
+        'employment_contract':'file-contract','lease_agreement':'house',
+        'partnership_agreement':'handshake','service_agreement':'gears',
+        'privacy_policy':'lock','terms_of_service':'scale-balanced',
+        'memo':'memo','business_plan':'chart-line','proposal':'lightbulb',
+        'sow':'list-check','mou':'file-signature','cease_desist':'ban',
+        'press_release':'newspaper','meeting_minutes':'clipboard-list',
+        'performance_review':'star-half-stroke'
+      } %}
+      {% for key, label in doc_types.items() %}
+      <a href="/documents/generate?type={{ key }}" class="doc-type-option {% if doc_type == key %}active{% endif %}">
+        <i class="fas fa-{{ icons.get(key, 'file-lines') }}"></i> {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div>
+    <div class="gen-header">
+      <div class="gen-title">
+        {% set icons = {
+          'nda':'shield-halved','resume':'id-card','invoice':'receipt',
+          'offer_letter':'envelope-open-text','cover_letter':'paper-plane',
+          'employment_contract':'file-contract','lease_agreement':'house',
+          'partnership_agreement':'handshake','service_agreement':'gears',
+          'privacy_policy':'lock','terms_of_service':'scale-balanced',
+          'memo':'memo','business_plan':'chart-line','proposal':'lightbulb',
+          'sow':'list-check','mou':'file-signature','cease_desist':'ban',
+          'press_release':'newspaper','meeting_minutes':'clipboard-list',
+          'performance_review':'star-half-stroke'
+        } %}
+        <i class="fas fa-{{ icons.get(doc_type, 'file-lines') }}" style="color:var(--accent2);margin-right:8px"></i>
+        {{ doc_types[doc_type] }}
+      </div>
+      <div class="gen-desc">Fill in the details below and AI will generate a complete, professional document.</div>
+    </div>
+
+    <div class="card">
+      <form method="post" action="/documents/generate">
+        <input type="hidden" name="doc_type" value="{{ doc_type }}">
+
+        <div class="form-group">
+          <label class="form-label">Document Details</label>
+          <textarea name="details" class="form-input" id="details-input"
+            placeholder="Describe the parties involved, key terms, dates, and any specific requirements..."
+            required></textarea>
+          <div style="margin-top:8px;font-size:12px;color:var(--muted)">Quick prompts:</div>
+          <div class="prompt-hints" id="hints"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="gen-btn">
+          <i class="fas fa-sparkles"></i> Generate Document
+        </button>
+        <span id="gen-loading" style="display:none;margin-left:12px;color:var(--muted2);font-size:13px;">
+          <i class="fas fa-spinner fa-spin"></i> Generating… this may take a moment
+        </span>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const DOC_TYPE = {{ doc_type | tojson }};
+const HINTS = {
+  nda: ["Mutual NDA between two companies", "One-way NDA for employee", "NDA for freelance contractor", "NDA with 2-year term"],
+  resume: ["Software Engineer, 5 years experience, Python/React", "Marketing Manager with MBA", "Recent graduate entry-level", "Senior Data Scientist"],
+  invoice: ["Web design project, $2500, Net 30", "Monthly retainer invoice", "Consulting services, 40 hours @ $150/hr", "Product sale invoice"],
+  offer_letter: ["Full-time Software Engineer, $120k salary, remote", "Part-time Marketing role", "Executive position with equity", "Internship offer letter"],
+  cover_letter: ["Applying for Product Manager at a tech startup", "Career change to software engineering", "Senior leadership role application", "Remote position application"],
+  employment_contract: ["Full-time developer contract, 12 months", "At-will employment agreement", "Contract with non-compete clause", "Executive employment agreement"],
+  lease_agreement: ["1-year residential apartment lease", "Month-to-month commercial lease", "Office space rental agreement", "Sublease agreement"],
+  partnership_agreement: ["50/50 business partnership", "LLC operating agreement", "Joint venture agreement", "Silent partner agreement"],
+  service_agreement: ["IT consulting services", "Freelance design services", "Marketing agency retainer", "Software development services"],
+  privacy_policy: ["SaaS web app privacy policy", "E-commerce store", "Mobile app privacy policy", "Blog or content site"],
+  terms_of_service: ["SaaS product terms", "Marketplace platform", "Mobile app ToS", "E-commerce ToS"],
+  memo: ["Company policy update", "Project status update", "Meeting follow-up memo", "Announcement memo"],
+  business_plan: ["Tech startup, B2B SaaS", "Restaurant business plan", "E-commerce business plan", "Consulting firm plan"],
+  proposal: ["Software development project proposal", "Marketing campaign proposal", "Event planning proposal", "Research project proposal"],
+  sow: ["Website redesign project SOW", "Mobile app development", "Data analysis project", "Content creation SOW"],
+  mou: ["University partnership MOU", "Government agency MOU", "Non-profit collaboration", "Research partnership MOU"],
+  cease_desist: ["Copyright infringement", "Trademark violation", "Defamation cease and desist", "Contract breach notice"],
+  press_release: ["Product launch announcement", "Company funding announcement", "New partnership release", "Award/achievement announcement"],
+  meeting_minutes: ["Board meeting minutes", "Weekly team meeting", "Project kickoff meeting", "AGM minutes"],
+  performance_review: ["Annual performance review", "Mid-year check-in", "Improvement plan review", "Executive performance review"],
+};
+
+function loadHints() {
+  const container = document.getElementById('hints');
+  const hints = HINTS[DOC_TYPE] || [];
+  container.innerHTML = '';
+  hints.forEach(h => {
+    const btn = document.createElement('span');
+    btn.className = 'prompt-hint';
+    btn.textContent = h;
+    btn.onclick = () => {
+      document.getElementById('details-input').value = h;
+    };
+    container.appendChild(btn);
+  });
+}
+
+document.querySelector('form').addEventListener('submit', function() {
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+  document.getElementById('gen-loading').style.display = 'inline';
+});
+
+loadHints();
+</script>
+{% endblock %}
