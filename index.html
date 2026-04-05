@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocGen AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  /* ══════════════════════════════════════
+     THEME VARIABLES — DARK (default)
+  ══════════════════════════════════════ */
+  :root,
+  [data-theme="dark"] {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --border2: #2a2a3e;
+    --accent: #7c6af7;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(124,106,247,0.15);
+    --gold: #f0c060;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --muted2: #9090b0;
+    --shadow: rgba(0,0,0,0.4);
+    --modal-overlay: rgba(0,0,0,0.7);
+  }
+
+  /* ══════════════════════════════════════
+     THEME VARIABLES — LIGHT
+  ══════════════════════════════════════ */
+  [data-theme="light"] {
+    --bg: #f4f4f8;
+    --surface: #ffffff;
+    --surface2: #f0f0f6;
+    --border: #e0e0ec;
+    --border2: #cacada;
+    --accent: #6c5ce7;
+    --accent2: #7c6af7;
+    --accent-glow: rgba(108,92,231,0.12);
+    --gold: #d4a017;
+    --green: #16a34a;
+    --red: #dc2626;
+    --text: #111118;
+    --muted: #8888a8;
+    --muted2: #55556a;
+    --shadow: rgba(0,0,0,0.12);
+    --modal-overlay: rgba(0,0,0,0.45);
+  }
+
+  [data-theme="light"] .sidebar { box-shadow: 2px 0 16px var(--shadow); }
+  [data-theme="light"] .topbar { box-shadow: 0 2px 12px var(--shadow); }
+  [data-theme="light"] .stat-card:hover { box-shadow: 0 8px 24px var(--shadow); }
+  [data-theme="light"] .doc-card:hover { box-shadow: 0 8px 24px var(--shadow); }
+  [data-theme="light"] .msg-bubble.assistant { box-shadow: 0 2px 8px var(--shadow); }
+  [data-theme="light"] .welcome-banner {
+    background: linear-gradient(135deg,rgba(108,92,231,0.08),rgba(124,106,247,0.05));
+    border-color: rgba(108,92,231,0.18);
+  }
+  [data-theme="light"] .auth-right { background: #f8f8fc; }
+  [data-theme="light"] .logo-icon { box-shadow: 0 0 20px rgba(108,92,231,0.25); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 15px;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── Page visibility ── */
+  .page { display: none; }
+  .page.active { display: flex; flex-direction: column; min-height: 100vh; width: 100%; }
+  .auth-page { display: none; align-items: stretch; min-height: 100vh; width: 100%; }
+  .auth-page.active { display: flex; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    overflow-y: auto;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo .logo-mark { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), #c084fc);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff;
+    box-shadow: 0 0 20px var(--accent-glow);
+    flex-shrink: 0;
+  }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text); letter-spacing: -0.5px; }
+  .logo-text span { color: var(--accent2); }
+  .sidebar-user {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #7c6af7, #c084fc);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: #fff;
+    flex-shrink: 0;
+  }
+  .user-info { overflow: hidden; }
+  .user-name { font-weight: 600; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: var(--muted); }
+  .sidebar-nav { padding: 12px; flex: 1; }
+  .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; padding: 8px 8px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    color: var(--muted2); font-size: 14px; font-weight: 400;
+    transition: all 0.15s; margin-bottom: 2px;
+    cursor: pointer; background: none; border: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-glow); color: var(--accent2); font-weight: 500; }
+  .nav-item i { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; }
+  .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
+  .logout-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    color: var(--muted2); font-size: 14px;
+    transition: all 0.15s; width: 100%;
+    background: none; border: none; cursor: pointer;
+  }
+  .logout-btn:hover { background: rgba(248,113,113,0.1); color: var(--red); }
+
+  /* ── Main layout ── */
+  .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar {
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 50;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* ── Theme Toggle Button ── */
+  .theme-toggle {
+    width: 36px; height: 36px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; color: var(--muted2);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.15s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { background: var(--accent-glow); color: var(--accent2); border-color: var(--accent); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+  .btn-ghost { background: transparent; color: var(--muted2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .btn-danger:hover { background: rgba(248,113,113,0.2); }
+  .btn-success { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+  .btn-success:hover { background: rgba(74,222,128,0.22); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-company {
+    background: linear-gradient(135deg, rgba(240,192,96,0.12), rgba(240,192,96,0.06));
+    color: var(--gold); border: 1px solid rgba(240,192,96,0.3);
+    font-weight: 600;
+  }
+  .btn-company:hover { background: rgba(240,192,96,0.2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(240,192,96,0.15); }
+
+  /* ── Cards ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: background 0.25s, border-color 0.25s; }
+
+  /* ── Forms ── */
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--muted2); margin-bottom: 6px; }
+  .form-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 10px 14px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color 0.15s, background 0.25s; outline: none;
+  }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .form-input::placeholder { color: var(--muted); }
+  textarea.form-input { resize: vertical; min-height: 100px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ── Badges ── */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-purple { background: var(--accent-glow); color: var(--accent2); }
+  .badge-green { background: rgba(74,222,128,0.1); color: var(--green); }
+  .badge-gold { background: rgba(240,192,96,0.1); color: var(--gold); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ── Grid helpers ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-2 { gap: 8px; }
+  .mb-1 { margin-bottom: 8px; }
+  .mb-2 { margin-bottom: 16px; }
+  .mb-3 { margin-bottom: 24px; }
+  .text-muted { color: var(--muted); font-size: 13px; }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+  }
+
+  /* ── Flash ── */
+  .flash-error {
+    background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red); padding: 10px 16px; border-radius: 8px;
+    margin-bottom: 20px; font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ══════════════════════════════════════
+     MODAL SYSTEM
+  ══════════════════════════════════════ */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: var(--modal-overlay);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    width: 100%; max-width: 680px;
+    max-height: 90vh; overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.25s ease;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+  }
+  @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+  .modal-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--surface); z-index: 1;
+  }
+  .modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--muted2); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .modal-close:hover { background: rgba(248,113,113,0.1); color: var(--red); border-color: rgba(248,113,113,0.3); }
+  .modal-body { padding: 24px 28px; }
+  .modal-footer { padding: 16px 28px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ══════════════════════════════════════
+     COMPANY PROFILE MODAL
+  ══════════════════════════════════════ */
+  .company-logo-upload {
+    border: 2px dashed var(--border2); border-radius: 12px;
+    padding: 32px; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: var(--surface2);
+    position: relative; overflow: hidden;
+  }
+  .company-logo-upload:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .company-logo-upload input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .logo-preview-wrap { display: none; align-items: center; gap: 16px; padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; }
+  .logo-preview-img { width: 56px; height: 56px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+  .letterhead-preview {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin-top: 8px;
+    font-size: 12px; color: var(--muted2); line-height: 1.7;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .letterhead-preview .lh-company { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+  .letterhead-preview .lh-tagline { font-size: 11px; color: var(--accent2); margin-bottom: 8px; }
+  .letterhead-preview .lh-divider { height: 2px; background: linear-gradient(90deg, var(--accent), transparent); margin: 8px 0; border-radius: 2px; }
+  .company-banner {
+    background: linear-gradient(135deg, rgba(240,192,96,0.1), rgba(240,192,96,0.05));
+    border: 1px solid rgba(240,192,96,0.25); border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .company-banner-icon { font-size: 28px; }
+  .company-banner h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+  .company-banner p { font-size: 12px; color: var(--muted2); line-height: 1.5; }
+  .section-divider { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 6px 0 10px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+
+  /* ══════════════════════════════════════
+     AUTH PAGES
+  ══════════════════════════════════════ */
+  #page-login { display: none; }
+  #page-login.active { display: flex; }
+  .auth-left {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 48px; position: relative; overflow: hidden;
+  }
+  .auth-left::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124,106,247,0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .auth-left-content { position: relative; max-width: 420px; width: 100%; }
+  .auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 56px; }
+  .auth-logo .logo-icon { width: 42px; height: 42px; border-radius: 12px; font-size: 18px; }
+  .auth-logo .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; }
+  .auth-logo .logo-text span { color: var(--accent2); }
+  .auth-h1 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+  .auth-sub { color: var(--muted2); font-size: 15px; margin-bottom: 36px; }
+  .input-wrap { position: relative; }
+  .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+  .input-with-icon { padding-left: 42px !important; }
+  .btn-submit {
+    width: 100%; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 12px;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; margin-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+  .auth-footer { margin-top: 24px; text-align: center; font-size: 14px; color: var(--muted2); }
+  .auth-footer a { color: var(--accent2); text-decoration: none; font-weight: 500; cursor: pointer; }
+  .auth-right {
+    width: 460px; background: var(--surface); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px; position: relative; overflow: hidden;
+  }
+  .auth-right::before {
+    content: ''; position: absolute; width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(124,106,247,0.2), transparent 70%);
+    top: -80px; right: -80px;
+  }
+  .feature-list { list-style: none; width: 100%; }
+  .feature-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .feature-item:last-child { border-bottom: none; }
+  .feature-icon { width: 36px; height: 36px; flex-shrink: 0; background: var(--accent-glow); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent2); font-size: 14px; }
+  .feature-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .feature-desc { font-size: 12px; color: var(--muted2); }
+  #page-signup { display: none; align-items: center; justify-content: center; padding: 40px 20px; min-height: 100vh; width: 100%; }
+  #page-signup.active { display: flex; }
+  .auth-card { width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; position: relative; overflow: hidden; }
+  .auth-card::before { content: ''; position: absolute; top: -80px; right: -80px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(124,106,247,0.18), transparent 70%); }
+
+  /* ══════════════════════════════════════
+     DASHBOARD
+  ══════════════════════════════════════ */
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px; position: relative; overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s, background 0.25s;
+  }
+  .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .stat-card::after {
+    content: ''; position: absolute; top: 0; right: 0; width: 60px; height: 60px;
+    background: radial-gradient(circle, var(--glow-c, var(--accent-glow)), transparent 70%);
+  }
+  .stat-icon { width: 40px; height: 40px; background: var(--icon-bg, var(--accent-glow)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--icon-c, var(--accent2)); font-size: 16px; margin-bottom: 16px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 13px; color: var(--muted2); }
+  .doc-type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; }
+  .doc-type-btn {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 12px; text-align: center;
+    color: var(--muted2); transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .doc-type-btn i { font-size: 18px; color: var(--accent2); }
+  .doc-type-btn span { font-size: 11px; font-weight: 500; line-height: 1.3; }
+  .doc-type-btn:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--text); transform: translateY(-2px); }
+  .recent-list { display: flex; flex-direction: column; gap: 1px; }
+  .recent-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); color: inherit; transition: color 0.15s; cursor: pointer; }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-item:hover .recent-title { color: var(--accent2); }
+  .recent-icon { width: 32px; height: 32px; flex-shrink: 0; background: var(--surface2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent2); font-size: 12px; }
+  .recent-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+  .recent-meta { font-size: 11px; color: var(--muted); }
+  .recent-arrow { margin-left: auto; color: var(--muted); font-size: 11px; }
+  .welcome-banner {
+    background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(192,132,252,0.08));
+    border: 1px solid rgba(124,106,247,0.2); border-radius: 12px;
+    padding: 22px 28px; display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; position: relative; overflow: hidden; gap: 12px;
+  }
+  .welcome-banner::before {
+    content: ''; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(124,106,247,0.15), transparent 70%);
+  }
+  .welcome-text h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .welcome-text p { font-size: 14px; color: var(--muted2); }
+  .welcome-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; position: relative; z-index: 1; }
+
+  /* Company Profile card on dashboard */
+  .company-profile-card {
+    background: linear-gradient(135deg, rgba(240,192,96,0.08), rgba(240,192,96,0.03));
+    border: 1px solid rgba(240,192,96,0.2); border-radius: 12px;
+    padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+    margin-bottom: 24px; cursor: pointer; transition: all 0.2s;
+  }
+  .company-profile-card:hover { border-color: rgba(240,192,96,0.4); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,192,96,0.08); }
+  .cp-logo { width: 48px; height: 48px; border-radius: 10px; background: rgba(240,192,96,0.15); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 20px; flex-shrink: 0; overflow: hidden; }
+  .cp-logo img { width: 100%; height: 100%; object-fit: contain; }
+  .cp-info { flex: 1; min-width: 0; }
+  .cp-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 2px; }
+  .cp-sub { font-size: 12px; color: var(--muted2); }
+  .cp-edit { color: var(--gold); font-size: 12px; display: flex; align-items: center; gap: 4px; }
+
+  /* ══════════════════════════════════════
+     DOCUMENTS LIST
+  ══════════════════════════════════════ */
+  .doc-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; transition: all 0.15s; position: relative;
+  }
+  .doc-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px var(--shadow); }
+  .doc-card-type { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .doc-card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; line-height: 1.4; }
+  .doc-card-date { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .doc-card-actions { display: flex; gap: 8px; }
+  .doc-card-preview { font-size: 12px; color: var(--muted2); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 14px; }
+  .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .empty-state { text-align: center; padding: 64px 20px; color: var(--muted); }
+  .empty-state-icon { width: 64px; height: 64px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent2); margin: 0 auto 16px; }
+
+  /* ══════════════════════════════════════
+     GENERATE DOCUMENT
+  ══════════════════════════════════════ */
+  .gen-layout { display: grid; grid-template-columns: 260px 1fr; gap: 24px; }
+  .doc-type-list { display: flex; flex-direction: column; gap: 2px; }
+  .doc-type-option {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border-radius: 8px; color: var(--muted2); font-size: 13px;
+    transition: all 0.12s; cursor: pointer; background: none; border: none; width: 100%; text-align: left;
+  }
+  .doc-type-option:hover { background: var(--surface2); color: var(--text); }
+  .doc-type-option.active { background: var(--accent-glow); color: var(--accent2); font-weight: 500; }
+  .doc-type-option i { width: 16px; text-align: center; font-size: 12px; flex-shrink: 0; }
+  .gen-header { margin-bottom: 24px; }
+  .gen-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .gen-desc { font-size: 14px; color: var(--muted2); }
+  .prompt-hints { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .prompt-hint {
+    padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--muted2); font-size: 12px;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .prompt-hint:hover { border-color: var(--accent); color: var(--accent2); }
+  .company-context-hint {
+    background: rgba(240,192,96,0.08); border: 1px solid rgba(240,192,96,0.2);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+    font-size: 12px; color: var(--muted2); display: flex; align-items: center; gap: 8px;
+  }
+  .company-context-hint i { color: var(--gold); }
+  .company-context-hint strong { color: var(--gold); }
+
+  /* ══════════════════════════════════════
+     DOCUMENT VIEW
+  ══════════════════════════════════════ */
+  .doc-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .doc-content {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 40px 48px; white-space: pre-wrap;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.8;
+    color: var(--text); max-width: 860px; position: relative;
+  }
+  .doc-content::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), #c084fc); border-radius: 12px 12px 0 0;
+  }
+  .copy-success {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--green); color: #fff; padding: 10px 20px;
+    border-radius: 8px; font-size: 14px; font-weight: 500;
+    display: none; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(74,222,128,0.3); z-index: 999;
+  }
+
+  /* ══════════════════════════════════════
+     CHAT PAGE
+  ══════════════════════════════════════ */
+  .chat-layout { display: flex; height: calc(100vh - 65px); margin: -28px -32px; }
+  .chat-history {
+    width: 260px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden; transition: background 0.25s;
+  }
+  .chat-history-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .chat-history-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .chat-history-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .chat-history-item {
+    display: flex; align-items: center; gap: 8px; padding: 9px 10px;
+    border-radius: 8px; color: var(--muted2); font-size: 13px;
+    transition: all 0.12s; margin-bottom: 2px; cursor: pointer; position: relative;
+  }
+  .chat-history-item:hover { background: var(--surface2); color: var(--text); }
+  .chat-history-item.active { background: var(--accent-glow); color: var(--accent2); font-weight: 500; }
+  .chat-history-item i { flex-shrink: 0; font-size: 12px; }
+  .chat-history-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-delete-btn { display: none; background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 4px; border-radius: 4px; font-size: 11px; }
+  .chat-history-item:hover .chat-delete-btn { display: block; }
+  .chat-delete-btn:hover { color: var(--red); }
+  .chat-history-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 13px; }
+  .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); gap: 16px; }
+  .chat-empty-icon { width: 60px; height: 60px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent2); }
+  .chat-empty h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text); }
+  .chat-empty p { font-size: 13px; text-align: center; max-width: 300px; }
+  .msg-row { display: flex; gap: 10px; max-width: 100%; }
+  .msg-row.user { justify-content: flex-end; }
+  .msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; align-self: flex-end; }
+  .msg-avatar.ai { background: linear-gradient(135deg, var(--accent), #c084fc); color: #fff; }
+  .msg-avatar.user-av { background: var(--surface2); border: 1px solid var(--border2); color: var(--accent2); }
+  .msg-bubble { max-width: 70%; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.6; }
+  .msg-bubble.user { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg-bubble.assistant { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; transition: background 0.25s; }
+  .chat-input-area { padding: 14px 20px; border-top: 1px solid var(--border); background: var(--surface); transition: background 0.25s; }
+  .chat-input-wrap {
+    display: flex; gap: 8px; align-items: flex-end;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 8px 8px 8px 14px; transition: border-color 0.15s;
+  }
+  .chat-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  #msg-input {
+    flex: 1; background: none; border: none; outline: none; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; resize: none;
+    max-height: 120px; padding: 4px 0; line-height: 1.5;
+  }
+  #msg-input::placeholder { color: var(--muted); }
+  .send-btn, .voice-btn {
+    width: 36px; height: 36px; flex-shrink: 0; border: none;
+    border-radius: 8px; color: #fff; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s; align-self: flex-end;
+  }
+  .send-btn { background: var(--accent); }
+  .send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .voice-btn { background: var(--surface); border: 1px solid var(--border2) !important; color: var(--muted2); border: none; }
+  .voice-btn:hover { background: var(--surface2); color: var(--accent2); border-color: var(--accent) !important; }
+  .voice-btn.recording {
+    background: rgba(248,113,113,0.15); color: var(--red);
+    border-color: rgba(248,113,113,0.4) !important;
+    animation: pulse-rec 1.2s infinite;
+  }
+  @keyframes pulse-rec {
+    0%,100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(248,113,113,0); }
+  }
+  .voice-status {
+    font-size: 11px; color: var(--red); display: none; align-items: center; gap: 5px; margin-top: 6px;
+    animation: blink 1.2s infinite;
+  }
+  .voice-status.show { display: flex; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted2); animation: typing 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+  .save-indicator { font-size: 11px; color: var(--green); display: none; align-items: center; gap: 4px; margin-top: 6px; }
+
+  /* Voice not supported toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border2);
+    color: var(--text); padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; z-index: 9999; display: none;
+    box-shadow: 0 4px 20px var(--shadow);
+  }
+  .toast.show { display: flex; align-items: center; gap: 8px; animation: fadeIn 0.2s; }
+
+  /* ── Print ── */
+  @media print {
+    .sidebar,.topbar,.doc-meta { display:none!important; }
+    .main { margin-left:0!important; }
+    .content { padding:0!important; }
+    .doc-content { border:none!important; padding:0!important; color:#000!important; background:#fff!important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     TOAST
+══════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════
+     COMPANY PROFILE MODAL
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="company-modal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span style="font-size:22px;">🏢</span>
+        <span>Company Profile</span>
+      </div>
+      <button class="modal-close" onclick="closeCompanyModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="company-banner">
+        <div class="company-banner-icon">⚡</div>
+        <div>
+          <h3>Auto-fill every document with your company details</h3>
+          <p>Your company info, logo & letterhead will be automatically included in all generated documents — contracts, invoices, offer letters, meeting minutes, and more.</p>
+        </div>
+      </div>
+
+      <!-- Logo & Letterhead Upload -->
+      <div class="section-divider">Branding</div>
+      <div class="form-row" style="margin-bottom:18px;">
+        <div>
+          <div class="form-label">Company Logo</div>
+          <div class="company-logo-upload" id="logo-upload-zone" onclick="document.getElementById('logo-file-input').click()">
+            <input type="file" id="logo-file-input" accept="image/*" onchange="handleLogoUpload(event)" style="display:none">
+            <i class="fas fa-cloud-arrow-up" style="font-size:24px;color:var(--accent2);margin-bottom:8px;display:block;"></i>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Click to upload logo</div>
+            <div style="font-size:11px;color:var(--muted);">PNG, JPG, SVG · Max 2MB</div>
+          </div>
+          <div class="logo-preview-wrap" id="logo-preview-wrap">
+            <img id="logo-preview-img" class="logo-preview-img" src="" alt="Logo">
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;" id="logo-file-name">logo.png</div>
+              <button class="btn btn-danger btn-sm" onclick="removeLogo()"><i class="fas fa-trash-can"></i> Remove</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="form-label">Letterhead Header Text</div>
+          <textarea id="cp-letterhead" class="form-input" style="min-height:108px;" placeholder="e.g.&#10;Acme Corp | www.acme.com | contact@acme.com&#10;123 Business Ave, Mumbai 400001"></textarea>
+        </div>
+      </div>
+
+      <!-- Basic Info -->
+      <div class="section-divider">Company Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" id="cp-name" class="form-input" placeholder="Acme Corporation">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Industry / Type</label>
+          <input type="text" id="cp-industry" class="form-input" placeholder="Technology, Finance, Legal…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Registration Number</label>
+          <input type="text" id="cp-reg" class="form-input" placeholder="CIN / GST / Company No.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tax / VAT Number</label>
+          <input type="text" id="cp-tax" class="form-input" placeholder="GST / VAT / EIN">
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="section-divider">Contact Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Primary Email</label>
+          <input type="email" id="cp-email" class="form-input" placeholder="hello@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="text" id="cp-phone" class="form-input" placeholder="+91 98765 43210">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Website</label>
+        <input type="text" id="cp-website" class="form-input" placeholder="https://www.yourcompany.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Registered Address</label>
+        <textarea id="cp-address" class="form-input" style="min-height:80px;" placeholder="123 Business Park, Floor 4&#10;Mumbai, Maharashtra 400001, India"></textarea>
+      </div>
+
+      <!-- Signatory -->
+      <div class="section-divider">Authorized Signatory</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Signatory Name</label>
+          <input type="text" id="cp-sig-name" class="form-input" placeholder="John Smith">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Designation / Title</label>
+          <input type="text" id="cp-sig-title" class="form-input" placeholder="CEO / Director / Manager">
+        </div>
+      </div>
+
+      <!-- Letterhead Preview -->
+      <div class="section-divider">Live Preview</div>
+      <div class="letterhead-preview" id="letterhead-preview">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <div id="lh-logo-wrap" style="display:none;"><img id="lh-logo-img" style="height:40px;width:auto;object-fit:contain;" src="" alt=""></div>
+          <div>
+            <div class="lh-company" id="lh-name">Your Company Name</div>
+            <div class="lh-tagline" id="lh-tagline">Industry · website.com</div>
+          </div>
+        </div>
+        <div class="lh-divider"></div>
+        <div id="lh-details" style="color:var(--muted2);">Address · Phone · Email will appear here</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCompanyModal()">Cancel</button>
+      <button class="btn btn-company" onclick="saveCompanyProfile()"><i class="fas fa-floppy-disk"></i> Save Company Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════ -->
+<div id="page-login" class="auth-page">
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-logo">
+        <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+        <div class="logo-text">Doc<span>Gen</span> AI</div>
+      </div>
+      <h1 class="auth-h1">Welcome back.</h1>
+      <p class="auth-sub">Sign in to generate documents and chat with AI.</p>
+      <div id="login-flash" class="flash-error" style="display:none;"></div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="login-email" class="form-input input-with-icon" placeholder="you@example.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="login-password" class="form-input input-with-icon" placeholder="••••••••">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="doLogin()"><i class="fas fa-arrow-right-to-bracket"></i> Sign In</button>
+      <p class="auth-footer">No account? <a onclick="navigate('signup')">Create one free →</a></p>
+    </div>
+  </div>
+  <div class="auth-right">
+    <ul class="feature-list">
+      <li class="feature-item">
+        <div class="feature-icon"><i class="fas fa-file-lines"></i></div>
+        <div><div class="feature-title">20+ Document Types</div><div class="feature-desc">NDA, Invoices, Resumes, Contracts & more — generated instantly.</div></div>
+      </li>
+      <li class="feature-item">
+        <div class="feature-icon"><i class="fas fa-microphone"></i></div>
+        <div><div class="feature-title">Voice-to-Text Chat</div><div class="feature-desc">Speak naturally — your voice is transcribed and sent instantly.</div></div>
+      </li>
+      <li class="feature-item">
+        <div class="feature-icon"><i class="fas fa-building"></i></div>
+        <div><div class="feature-title">Company Profile</div><div class="feature-desc">Set once — your letterhead & details auto-fill every document.</div></div>
+      </li>
+      <li class="feature-item">
+        <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
+        <div><div class="feature-title">Private & Secure</div><div class="feature-desc">Your data stays yours. No third-party sharing.</div></div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SIGNUP PAGE
+══════════════════════════════════════ -->
+<div id="page-signup" class="auth-page">
+  <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:40px 20px;">
+    <div class="auth-card">
+      <div class="auth-logo" style="margin-bottom:32px;">
+        <div class="logo-icon" style="width:38px;height:38px;border-radius:10px;"><i class="fas fa-bolt"></i></div>
+        <div class="logo-text" style="font-size:20px;">Doc<span>Gen</span> AI</div>
+      </div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:6px;">Create an account</h1>
+      <p style="color:var(--muted2);font-size:14px;margin-bottom:28px;">Start generating professional documents in seconds.</p>
+      <div id="signup-flash" class="flash-error" style="display:none;"></div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <div class="input-wrap"><i class="fas fa-user input-icon"></i><input type="text" id="signup-name" class="form-input input-with-icon" placeholder="John Smith"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap"><i class="fas fa-envelope input-icon"></i><input type="email" id="signup-email" class="form-input input-with-icon" placeholder="you@example.com"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap"><i class="fas fa-lock input-icon"></i><input type="password" id="signup-password" class="form-input input-with-icon" placeholder="Create a password (min 6 chars)"></div>
+      </div>
+      <button class="btn-submit" style="border-radius:9px;" onclick="doSignup()"><i class="fas fa-rocket"></i> Create Account</button>
+      <p class="auth-footer" style="margin-top:20px;">Already have an account? <a onclick="navigate('login')">Sign in →</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════ -->
+<div id="app-shell" style="display:none;width:100%;">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+        <div class="logo-text">Doc<span>Gen</span> AI</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">U</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-username">User</div>
+        <div class="user-role">Pro Member</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <button class="nav-item" id="nav-dashboard" onclick="navigate('dashboard')"><i class="fas fa-grid-2"></i> Dashboard</button>
+      <button class="nav-item" id="nav-chat" onclick="navigate('chat')"><i class="fas fa-message-dots"></i> AI Chat</button>
+      <button class="nav-item" id="nav-documents" onclick="navigate('documents')"><i class="fas fa-file-lines"></i> Documents</button>
+      <div class="nav-section-label" style="margin-top:12px;">Quick Generate</div>
+      <button class="nav-item" onclick="navigate('generate','nda')"><i class="fas fa-shield-halved"></i> NDA</button>
+      <button class="nav-item" onclick="navigate('generate','resume')"><i class="fas fa-id-card"></i> Resume / CV</button>
+      <button class="nav-item" onclick="navigate('generate','invoice')"><i class="fas fa-receipt"></i> Invoice</button>
+      <button class="nav-item" onclick="navigate('generate','offer_letter')"><i class="fas fa-envelope-open-text"></i> Offer Letter</button>
+      <button class="nav-item" onclick="navigate('generate','cover_letter')"><i class="fas fa-paper-plane"></i> Cover Letter</button>
+      <button class="nav-item" onclick="navigate('generate','employment_contract')"><i class="fas fa-file-contract"></i> Employment Contract</button>
+      <button class="nav-item" onclick="navigate('generate','privacy_policy')"><i class="fas fa-lock"></i> Privacy Policy</button>
+      <button class="nav-item" onclick="navigate('generate','proposal')"><i class="fas fa-lightbulb"></i> Proposal</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()"><i class="fas fa-arrow-right-from-bracket"></i> Log out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">DocGen AI</div>
+      <div class="topbar-actions" id="topbar-actions">
+        <!-- theme toggle always present -->
+        <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">
+          <i class="fas fa-moon" id="theme-icon"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <div id="view-dashboard" style="display:none;"></div>
+      <!-- DOCUMENTS LIST -->
+      <div id="view-documents" style="display:none;"></div>
+      <!-- GENERATE -->
+      <div id="view-generate" style="display:none;"></div>
+      <!-- DOC VIEW -->
+      <div id="view-doc" style="display:none;">
+        <div class="doc-meta">
+          <span class="badge badge-purple" id="doc-view-type"></span>
+          <span style="color:var(--muted);font-size:13px" id="doc-view-date"></span>
+          <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="deleteCurrentDoc()"><i class="fas fa-trash-can"></i> Delete</button>
+        </div>
+        <div class="doc-content" id="doc-view-content"></div>
+        <div class="copy-success" id="copy-success"><i class="fas fa-check"></i> Copied to clipboard!</div>
+      </div>
+      <!-- CHAT -->
+      <div id="view-chat" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+const state = {
+  currentUser: null,
+  chats: [], docs: [],
+  activeChatId: null,
+  activeChatMessages: [],
+  currentDocId: null,
+  currentGenType: 'nda',
+  currentPage: 'login',
+  theme: 'dark',
+  company: null,      // company profile object
+  companyLogoData: null  // base64 logo data
+};
+
+/* ── API wrapper ── */
+async function api(method, path, body) {
+  const opts = { method, headers: {'Content-Type':'application/json'}, credentials:'same-origin' };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+/* ══════════════════════════════════════
+   THEME
+══════════════════════════════════════ */
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', state.theme);
+  const icon = document.getElementById('theme-icon');
+  icon.className = state.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+  try { localStorage.setItem('docgen-theme', state.theme); } catch(e){}
+}
+function initTheme() {
+  try {
+    const saved = localStorage.getItem('docgen-theme');
+    if (saved) { state.theme = saved; document.documentElement.setAttribute('data-theme', saved); }
+  } catch(e){}
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.className = state.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+/* ══════════════════════════════════════
+   COMPANY PROFILE
+══════════════════════════════════════ */
+function openCompanyModal() {
+  const cp = state.company || {};
+  // Populate fields
+  ['name','industry','reg','tax','email','phone','website','address','letterhead'].forEach(k => {
+    const el = document.getElementById('cp-' + k);
+    if (el) el.value = cp[k] || '';
+  });
+  ['sig-name','sig-title'].forEach(k => {
+    const el = document.getElementById('cp-' + k);
+    if (el) el.value = cp[k.replace('-','_')] || '';
+  });
+  // Logo
+  if (state.companyLogoData) {
+    showLogoPreview(state.companyLogoData, 'Saved Logo');
+  } else {
+    hideLogo();
+  }
+  updateLetterheadPreview();
+  document.getElementById('company-modal').classList.add('open');
+
+  // Live preview on input
+  ['cp-name','cp-industry','cp-email','cp-phone','cp-website','cp-address','cp-letterhead'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.oninput = updateLetterheadPreview;
+  });
+}
+function closeCompanyModal() {
+  document.getElementById('company-modal').classList.remove('open');
+}
+function updateLetterheadPreview() {
+  const name    = document.getElementById('cp-name')?.value || 'Your Company Name';
+  const industry= document.getElementById('cp-industry')?.value || '';
+  const website = document.getElementById('cp-website')?.value || '';
+  const email   = document.getElementById('cp-email')?.value || '';
+  const phone   = document.getElementById('cp-phone')?.value || '';
+  const addr    = document.getElementById('cp-address')?.value || '';
+  const lhText  = document.getElementById('cp-letterhead')?.value || '';
+
+  document.getElementById('lh-name').textContent = name;
+  document.getElementById('lh-tagline').textContent = [industry, website].filter(Boolean).join(' · ');
+  const det = lhText || [addr, phone, email].filter(Boolean).join(' · ');
+  document.getElementById('lh-details').textContent = det || 'Address · Phone · Email will appear here';
+
+  // Logo in preview
+  if (state.companyLogoData) {
+    document.getElementById('lh-logo-wrap').style.display = 'block';
+    document.getElementById('lh-logo-img').src = state.companyLogoData;
+  } else {
+    document.getElementById('lh-logo-wrap').style.display = 'none';
+  }
+}
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('Logo must be under 2MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.companyLogoData = e.target.result;
+    showLogoPreview(e.target.result, file.name);
+    updateLetterheadPreview();
+  };
+  reader.readAsDataURL(file);
+}
+function showLogoPreview(dataUrl, name) {
+  document.getElementById('logo-upload-zone').style.display = 'none';
+  const wrap = document.getElementById('logo-preview-wrap');
+  wrap.style.display = 'flex';
+  document.getElementById('logo-preview-img').src = dataUrl;
+  document.getElementById('logo-file-name').textContent = name;
+}
+function hideLogo() {
+  document.getElementById('logo-upload-zone').style.display = 'block';
+  document.getElementById('logo-preview-wrap').style.display = 'none';
+  document.getElementById('logo-preview-img').src = '';
+}
+function removeLogo() {
+  state.companyLogoData = null;
+  hideLogo();
+  document.getElementById('logo-file-input').value = '';
+  updateLetterheadPreview();
+}
+function saveCompanyProfile() {
+  const name = document.getElementById('cp-name').value.trim();
+  if (!name) { showToast('Company name is required', 'error'); return; }
+  state.company = {
+    name, industry: document.getElementById('cp-industry').value.trim(),
+    reg: document.getElementById('cp-reg').value.trim(),
+    tax: document.getElementById('cp-tax').value.trim(),
+    email: document.getElementById('cp-email').value.trim(),
+    phone: document.getElementById('cp-phone').value.trim(),
+    website: document.getElementById('cp-website').value.trim(),
+    address: document.getElementById('cp-address').value.trim(),
+    letterhead: document.getElementById('cp-letterhead').value.trim(),
+    sig_name: document.getElementById('cp-sig-name').value.trim(),
+    sig_title: document.getElementById('cp-sig-title').value.trim(),
+  };
+  try { localStorage.setItem('docgen-company', JSON.stringify(state.company)); } catch(e){}
+  if (state.companyLogoData) {
+    try { localStorage.setItem('docgen-logo', state.companyLogoData); } catch(e){}
+  } else {
+    try { localStorage.removeItem('docgen-logo'); } catch(e){}
+  }
+  closeCompanyModal();
+  showToast('✅ Company profile saved!');
+  // Refresh dashboard if on it
+  if (state.currentPage === 'dashboard') renderDashboard();
+}
+function loadCompanyProfile() {
+  try {
+    const saved = localStorage.getItem('docgen-company');
+    if (saved) state.company = JSON.parse(saved);
+    const logo = localStorage.getItem('docgen-logo');
+    if (logo) state.companyLogoData = logo;
+  } catch(e){}
+}
+function getCompanyContextText() {
+  if (!state.company) return '';
+  const cp = state.company;
+  const parts = [`Company: ${cp.name}`];
+  if (cp.industry) parts.push(`Industry: ${cp.industry}`);
+  if (cp.address) parts.push(`Address: ${cp.address}`);
+  if (cp.email) parts.push(`Email: ${cp.email}`);
+  if (cp.phone) parts.push(`Phone: ${cp.phone}`);
+  if (cp.website) parts.push(`Website: ${cp.website}`);
+  if (cp.reg) parts.push(`Registration: ${cp.reg}`);
+  if (cp.tax) parts.push(`Tax No: ${cp.tax}`);
+  if (cp.sig_name) parts.push(`Authorized Signatory: ${cp.sig_name}${cp.sig_title ? ', ' + cp.sig_title : ''}`);
+  if (cp.letterhead) parts.push(`Letterhead: ${cp.letterhead}`);
+  return parts.join('\n');
+}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.innerHTML = type === 'error'
+    ? `<i class="fas fa-circle-exclamation" style="color:var(--red)"></i> ${msg}`
+    : `<span>${msg}</span>`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ══════════════════════════════════════
+   DOC TYPES
+══════════════════════════════════════ */
+const DOC_TYPES = {
+  nda:'NDA', resume:'Resume / CV', invoice:'Invoice',
+  offer_letter:'Offer Letter', cover_letter:'Cover Letter',
+  employment_contract:'Employment Contract', lease_agreement:'Lease Agreement',
+  partnership_agreement:'Partnership Agreement', service_agreement:'Service Agreement',
+  privacy_policy:'Privacy Policy', terms_of_service:'Terms of Service',
+  memo:'Business Memo', business_plan:'Business Plan', proposal:'Proposal',
+  sow:'Statement of Work', mou:'MOU', cease_desist:'Cease & Desist',
+  press_release:'Press Release', meeting_minutes:'Meeting Minutes',
+  performance_review:'Performance Review'
+};
+const DOC_ICONS = {
+  nda:'shield-halved',resume:'id-card',invoice:'receipt',
+  offer_letter:'envelope-open-text',cover_letter:'paper-plane',
+  employment_contract:'file-contract',lease_agreement:'house',
+  partnership_agreement:'handshake',service_agreement:'gears',
+  privacy_policy:'lock',terms_of_service:'scale-balanced',
+  memo:'memo',business_plan:'chart-line',proposal:'lightbulb',
+  sow:'list-check',mou:'file-signature',cease_desist:'ban',
+  press_release:'newspaper',meeting_minutes:'clipboard-list',
+  performance_review:'star-half-stroke'
+};
+const HINTS = {
+  nda:["Mutual NDA between two companies","One-way NDA for employee","NDA for freelance contractor","NDA with 2-year term"],
+  resume:["Software Engineer, 5 years experience, Python/React","Marketing Manager with MBA","Recent graduate entry-level","Senior Data Scientist"],
+  invoice:["Web design project, $2500, Net 30","Monthly retainer invoice","Consulting services, 40 hours @ $150/hr","Product sale invoice"],
+  offer_letter:["Full-time Software Engineer, $120k salary, remote","Part-time Marketing role","Executive position with equity","Internship offer letter"],
+  cover_letter:["Applying for Product Manager at a tech startup","Career change to software engineering","Senior leadership role application","Remote position application"],
+  employment_contract:["Full-time developer contract, 12 months","At-will employment agreement","Contract with non-compete clause","Executive employment agreement"],
+  lease_agreement:["1-year residential apartment lease","Month-to-month commercial lease","Office space rental agreement","Sublease agreement"],
+  partnership_agreement:["50/50 business partnership","LLC operating agreement","Joint venture agreement","Silent partner agreement"],
+  service_agreement:["IT consulting services","Freelance design services","Marketing agency retainer","Software development services"],
+  privacy_policy:["SaaS web app privacy policy","E-commerce store","Mobile app privacy policy","Blog or content site"],
+  terms_of_service:["SaaS product terms","Marketplace platform","Mobile app ToS","E-commerce ToS"],
+  memo:["Company policy update","Project status update","Meeting follow-up memo","Announcement memo"],
+  business_plan:["Tech startup, B2B SaaS","Restaurant business plan","E-commerce business plan","Consulting firm plan"],
+  proposal:["Software development project proposal","Marketing campaign proposal","Event planning proposal","Research project proposal"],
+  sow:["Website redesign project SOW","Mobile app development","Data analysis project","Content creation SOW"],
+  mou:["University partnership MOU","Government agency MOU","Non-profit collaboration","Research partnership MOU"],
+  cease_desist:["Copyright infringement","Trademark violation","Defamation cease and desist","Contract breach notice"],
+  press_release:["Product launch announcement","Company funding announcement","New partnership release","Award/achievement announcement"],
+  meeting_minutes:["Board meeting minutes","Weekly team meeting","Project kickoff meeting","AGM minutes"],
+  performance_review:["Annual performance review","Mid-year check-in","Improvement plan review","Executive performance review"]
+};
+
+/* ══════════════════════════════════════
+   AUTH
+══════════════════════════════════════ */
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-password').value;
+  const flash = document.getElementById('login-flash');
+  flash.style.display = 'none';
+  try {
+    const user = await api('POST', '/api/login', { email, password: pw });
+    state.currentUser = user;
+    navigate('dashboard');
+  } catch(e) { flash.textContent = e.message; flash.style.display = 'flex'; }
+}
+async function doSignup() {
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pw    = document.getElementById('signup-password').value;
+  const flash = document.getElementById('signup-flash');
+  flash.style.display = 'none';
+  try {
+    const user = await api('POST', '/api/signup', { name, email, password: pw });
+    state.currentUser = user;
+    navigate('dashboard');
+  } catch(e) { flash.textContent = e.message; flash.style.display = 'flex'; }
+}
+async function doLogout() {
+  await api('POST', '/api/logout');
+  state.currentUser = null;
+  navigate('login');
+}
+
+/* ══════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════ */
+async function navigate(page, param) {
+  document.querySelectorAll('.auth-page').forEach(el => el.classList.remove('active'));
+  document.getElementById('app-shell').style.display = 'none';
+
+  if (page === 'login') { document.getElementById('page-login').classList.add('active'); return; }
+  if (page === 'signup') { document.getElementById('page-signup').classList.add('active'); return; }
+  if (!state.currentUser) { navigate('login'); return; }
+
+  document.getElementById('app-shell').style.display = 'flex';
+  document.getElementById('sidebar-username').textContent = state.currentUser.name;
+  document.getElementById('sidebar-avatar').textContent   = state.currentUser.name[0].toUpperCase();
+
+  document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  state.currentPage = page;
+
+  // Always render theme toggle
+  const themeBtn = `<button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode"><i class="${state.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun'}" id="theme-icon"></i></button>`;
+
+  if (page === 'dashboard') {
+    document.getElementById('nav-dashboard').classList.add('active');
+    document.getElementById('topbar-title').textContent = 'Dashboard';
+    setTopbarActions(`
+      <button class="btn btn-ghost btn-sm" onclick="openNewChatPrompt()"><i class="fas fa-plus"></i> New Chat</button>
+      <button class="btn btn-primary btn-sm" onclick="navigate('generate')"><i class="fas fa-file-plus"></i> New Document</button>
+      ${themeBtn}
+    `);
+    document.getElementById('view-dashboard').style.display = 'block';
+    await renderDashboard();
+
+  } else if (page === 'chat') {
+    document.getElementById('nav-chat').classList.add('active');
+    document.getElementById('topbar-title').textContent = 'AI Chat';
+    setTopbarActions(`<button class="btn btn-primary btn-sm" onclick="openNewChatPrompt()"><i class="fas fa-plus"></i> New Chat</button>${themeBtn}`);
+    if (param) state.activeChatId = param;
+    document.getElementById('view-chat').style.display = 'block';
+    await renderChat();
+
+  } else if (page === 'documents') {
+    document.getElementById('nav-documents').classList.add('active');
+    document.getElementById('topbar-title').textContent = 'Documents';
+    setTopbarActions(`<button class="btn btn-primary btn-sm" onclick="navigate('generate')"><i class="fas fa-sparkles"></i> Generate New</button>${themeBtn}`);
+    document.getElementById('view-documents').style.display = 'block';
+    await renderDocumentsList();
+
+  } else if (page === 'generate') {
+    document.getElementById('topbar-title').textContent = 'Generate Document';
+    setTopbarActions(`<button class="btn btn-ghost btn-sm" onclick="navigate('documents')"><i class="fas fa-arrow-left"></i> All Documents</button>${themeBtn}`);
+    state.currentGenType = param || state.currentGenType || 'nda';
+    renderGenerate();
+    document.getElementById('view-generate').style.display = 'block';
+
+  } else if (page === 'doc-view') {
+    document.getElementById('topbar-title').textContent = 'Document';
+    let doc;
+    try { doc = await api('GET', `/api/documents/${param}`); }
+    catch(e) { navigate('documents'); return; }
+    state.currentDocId = param;
+    setTopbarActions(`
+      <button class="btn btn-ghost btn-sm" onclick="navigate('generate','${doc.doc_type}')"><i class="fas fa-rotate-right"></i> Regenerate</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyDoc()"><i class="fas fa-copy"></i> Copy</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-ghost btn-sm" onclick="navigate('documents')"><i class="fas fa-arrow-left"></i> Back</button>
+      ${themeBtn}
+    `);
+    document.getElementById('doc-view-type').innerHTML = `<i class="fas fa-file-lines"></i> ${doc.doc_type.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}`;
+    document.getElementById('doc-view-date').innerHTML = `<i class="fas fa-calendar"></i> ${doc.created_at.slice(0,16)}`;
+    document.getElementById('doc-view-content').textContent = doc.content;
+    document.getElementById('view-doc').style.display = 'block';
+  }
+}
+function setTopbarActions(html) {
+  document.getElementById('topbar-actions').innerHTML = html;
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════ */
+async function renderDashboard() {
+  const user = state.currentUser;
+  const view = document.getElementById('view-dashboard');
+
+  let data;
+  try { data = await api('GET', '/api/dashboard'); }
+  catch(e) { data = { chat_count:0, doc_count:0, msg_count:0, chats:[], docs:[] }; }
+
+  // Company profile card
+  const cp = state.company;
+  const cpCard = cp
+    ? `<div class="company-profile-card" onclick="openCompanyModal()">
+        <div class="cp-logo">${state.companyLogoData ? `<img src="${state.companyLogoData}" alt="logo">` : `<i class="fas fa-building"></i>`}</div>
+        <div class="cp-info">
+          <div class="cp-name">${cp.name}</div>
+          <div class="cp-sub">${[cp.industry, cp.email].filter(Boolean).join(' · ') || 'Company profile set'}</div>
+        </div>
+        <div class="cp-edit"><i class="fas fa-pen"></i> Edit</div>
+      </div>`
+    : `<div class="company-profile-card" onclick="openCompanyModal()">
+        <div class="cp-logo"><i class="fas fa-building-circle-arrow-right"></i></div>
+        <div class="cp-info">
+          <div class="cp-name" style="color:var(--gold);">Set Up Company Profile</div>
+          <div class="cp-sub">Add your company details & logo — auto-filled in every document you generate</div>
+        </div>
+        <div class="cp-edit"><i class="fas fa-plus"></i> Add</div>
+      </div>`;
+
+  // Doc grid
+  const docGrid = Object.entries(DOC_TYPES).map(([k,v]) =>
+    `<button class="doc-type-btn" onclick="navigate('generate','${k}')">
+      <i class="fas fa-${DOC_ICONS[k]||'file-lines'}"></i><span>${v}</span>
+    </button>`).join('');
+
+  // Recent chats
+  let recentChatsHTML = data.chats && data.chats.length
+    ? `<div class="recent-list">${data.chats.slice(0,5).map(c =>
+        `<div class="recent-item" onclick="navigate('chat',${c.id})">
+          <div class="recent-icon"><i class="fas fa-message-dots"></i></div>
+          <div><div class="recent-title">${c.title}</div><div class="recent-meta">${c.created_at.slice(0,10)}</div></div>
+          <i class="fas fa-chevron-right recent-arrow"></i>
+        </div>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;justify-content:center;" onclick="navigate('chat')">View all chats</button>`
+    : `<p class="text-muted">No chats yet. <a onclick="navigate('chat')" style="color:var(--accent2);cursor:pointer;">Start a conversation →</a></p>`;
+
+  let recentDocsHTML = data.docs && data.docs.length
+    ? `<div class="recent-list">${data.docs.slice(0,5).map(d =>
+        `<div class="recent-item" onclick="navigate('doc-view',${d.id})">
+          <div class="recent-icon"><i class="fas fa-file-lines"></i></div>
+          <div><div class="recent-title">${d.title}</div><div class="recent-meta">${d.doc_type.replace(/_/g,' ')} · ${d.created_at.slice(0,10)}</div></div>
+          <i class="fas fa-chevron-right recent-arrow"></i>
+        </div>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%;justify-content:center;" onclick="navigate('documents')">View all documents</button>`
+    : `<p class="text-muted">No documents yet. <a onclick="navigate('generate')" style="color:var(--accent2);cursor:pointer;">Generate one →</a></p>`;
+
+  view.innerHTML = `
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h2>👋 Welcome back, ${user.name}!</h2>
+        <p>You have ${data.chat_count||0} saved chats and ${data.doc_count||0} documents generated.</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="btn btn-company" onclick="openCompanyModal()"><i class="fas fa-building"></i> ${cp ? 'Company Profile' : 'Add Company'}</button>
+        <button class="btn btn-primary" onclick="navigate('generate')"><i class="fas fa-sparkles"></i> Generate Document</button>
+      </div>
+    </div>
+
+    ${cpCard}
+
+    <div class="grid-3 mb-3">
+      <div class="stat-card" style="--glow-c:rgba(124,106,247,0.15);--icon-bg:rgba(124,106,247,0.12);--icon-c:#a78bfa;">
+        <div class="stat-icon"><i class="fas fa-message-dots"></i></div>
+        <div class="stat-value">${data.chat_count||0}</div>
+        <div class="stat-label">Saved Chats</div>
+      </div>
+      <div class="stat-card" style="--glow-c:rgba(74,222,128,0.1);--icon-bg:rgba(74,222,128,0.1);--icon-c:#4ade80;">
+        <div class="stat-icon"><i class="fas fa-file-lines"></i></div>
+        <div class="stat-value">${data.doc_count||0}</div>
+        <div class="stat-label">Documents Created</div>
+      </div>
+      <div class="stat-card" style="--glow-c:rgba(240,192,96,0.1);--icon-bg:rgba(240,192,96,0.1);--icon-c:#f0c060;">
+        <div class="stat-icon"><i class="fas fa-comments"></i></div>
+        <div class="stat-value">${data.msg_count||0}</div>
+        <div class="stat-label">Total Messages</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title"><i class="fas fa-file-plus" style="color:var(--accent2)"></i> Generate a Document</div>
+        <div class="doc-type-grid">${docGrid}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="card">
+          <div class="section-title"><i class="fas fa-clock-rotate-left" style="color:var(--accent2)"></i> Recent Chats</div>
+          ${recentChatsHTML}
+        </div>
+        <div class="card">
+          <div class="section-title"><i class="fas fa-file-lines" style="color:var(--accent2)"></i> Recent Documents</div>
+          ${recentDocsHTML}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   DOCUMENTS LIST
+══════════════════════════════════════ */
+async function renderDocumentsList() {
+  let docs;
+  try { docs = await api('GET', '/api/documents'); }
+  catch(e) { docs = []; }
+  state.docs = docs;
+  const view = document.getElementById('view-documents');
+  const quickBtns = Object.entries(DOC_TYPES).map(([k,v]) =>
+    `<button class="btn btn-ghost btn-sm" onclick="navigate('generate','${k}')">${v}</button>`).join('');
+  const grid = docs.length
+    ? `<div class="doc-grid">${docs.map(doc =>
+        `<div class="doc-card">
+          <div class="doc-card-type"><i class="fas fa-file-lines"></i> ${doc.doc_type.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+          <div class="doc-card-title">${doc.title}</div>
+          <div class="doc-card-date"><i class="fas fa-calendar" style="font-size:10px"></i> ${doc.created_at.slice(0,16)}</div>
+          <div class="doc-card-preview">${doc.content.slice(0,160)}…</div>
+          <div class="doc-card-actions">
+            <button class="btn btn-primary btn-sm" onclick="navigate('doc-view',${doc.id})"><i class="fas fa-eye"></i> View</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteDoc(${doc.id})"><i class="fas fa-trash-can"></i></button>
+          </div>
+        </div>`).join('')}</div>`
+    : `<div class="empty-state">
+        <div class="empty-state-icon"><i class="fas fa-file-lines"></i></div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:18px;color:var(--text);margin-bottom:8px">No documents yet</h3>
+        <p style="font-size:14px;margin-bottom:20px">Generate your first document in seconds.</p>
+        <button class="btn btn-primary" onclick="navigate('generate')"><i class="fas fa-sparkles"></i> Generate a Document</button>
+      </div>`;
+  view.innerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <div style="color:var(--muted2);font-size:14px;">${docs.length} document${docs.length!==1?'s':''} generated</div>
+    </div>
+    <div class="card mb-3" style="padding:20px">
+      <div class="section-title" style="margin-bottom:14px"><i class="fas fa-bolt" style="color:var(--accent2)"></i> Quick Generate</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">${quickBtns}</div>
+    </div>
+    ${grid}`;
+}
+
+async function deleteDoc(id) {
+  if (!confirm('Delete this document?')) return;
+  try { await api('DELETE', `/api/documents/${id}`); renderDocumentsList(); }
+  catch(e) { alert('Failed to delete: ' + e.message); }
+}
+async function deleteCurrentDoc() {
+  if (!confirm('Delete this document?')) return;
+  try { await api('DELETE', `/api/documents/${state.currentDocId}`); navigate('documents'); }
+  catch(e) { alert('Failed to delete: ' + e.message); }
+}
+function copyDoc() {
+  const text = document.getElementById('doc-view-content').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const el = document.getElementById('copy-success');
+    el.style.display = 'flex';
+    setTimeout(() => el.style.display = 'none', 2500);
+  });
+}
+
+/* ══════════════════════════════════════
+   GENERATE DOCUMENT
+══════════════════════════════════════ */
+function renderGenerate() {
+  const type = state.currentGenType;
+  const view = document.getElementById('view-generate');
+  const companyCtx = state.company
+    ? `<div class="company-context-hint">
+        <i class="fas fa-building"></i>
+        <span>Company profile active — <strong>${state.company.name}</strong>'s details will be auto-included in this document.</span>
+      </div>` : '';
+  view.innerHTML = `
+    <div class="gen-layout">
+      <div class="card" style="padding:16px;height:fit-content;position:sticky;top:80px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 4px">Document Type</div>
+        <div class="doc-type-list">
+          ${Object.entries(DOC_TYPES).map(([k,v]) =>
+            `<button class="doc-type-option ${k===type?'active':''}" onclick="switchGenType('${k}')">
+              <i class="fas fa-${DOC_ICONS[k]||'file-lines'}"></i> ${v}
+            </button>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="gen-header">
+          <div class="gen-title" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;">
+            <i class="fas fa-${DOC_ICONS[type]||'file-lines'}" style="color:var(--accent2);margin-right:8px"></i>${DOC_TYPES[type]}
+          </div>
+          <div style="font-size:14px;color:var(--muted2);">Fill in the details below and AI will generate a complete, professional document.</div>
+        </div>
+        <div class="card">
+          ${companyCtx}
+          <div class="form-group">
+            <label class="form-label">Document Details</label>
+            <textarea id="gen-details" class="form-input" style="min-height:200px;" placeholder="Describe the parties involved, key terms, dates, and any specific requirements…"></textarea>
+            <div style="margin-top:8px;font-size:12px;color:var(--muted)">Quick prompts:</div>
+            <div class="prompt-hints">
+              ${(HINTS[type]||[]).map(h => `<span class="prompt-hint" onclick="document.getElementById('gen-details').value='${h.replace(/'/g,"\\'")}'"">${h}</span>`).join('')}
+            </div>
+          </div>
+          <button class="btn btn-primary" id="gen-btn" onclick="generateDoc()">
+            <i class="fas fa-sparkles"></i> Generate Document
+          </button>
+          <span id="gen-loading" style="display:none;margin-left:12px;color:var(--muted2);font-size:13px;">
+            <i class="fas fa-spinner fa-spin"></i> Generating…
+          </span>
+        </div>
+      </div>
+    </div>`;
+}
+function switchGenType(type) {
+  state.currentGenType = type;
+  renderGenerate();
+}
+async function generateDoc() {
+  const details = document.getElementById('gen-details').value.trim();
+  if (!details) { alert('Please fill in the document details.'); return; }
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+  document.getElementById('gen-loading').style.display = 'inline';
+
+  // Inject company context if set
+  const companyCtx = getCompanyContextText();
+  const fullDetails = companyCtx ? `${details}\n\n---\n${companyCtx}` : details;
+
+  try {
+    const doc = await api('POST', '/api/documents/generate', { doc_type: state.currentGenType, details: fullDetails });
+    navigate('doc-view', doc.id);
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sparkles"></i> Generate Document';
+    document.getElementById('gen-loading').style.display = 'none';
+    alert('Generation failed: ' + e.message);
+  }
+}
+
+/* ══════════════════════════════════════
+   CHAT
+══════════════════════════════════════ */
+async function openNewChatPrompt() {
+  const title = prompt('Chat title:', 'New Chat');
+  if (title === null) return;
+  try {
+    const chat = await api('POST', '/api/chats', { title: title || 'New Chat' });
+    state.activeChatId = chat.id;
+    state.activeChatMessages = [];
+    navigate('chat', chat.id);
+  } catch(e) { alert('Failed to create chat: ' + e.message); }
+}
+
+async function renderChat() {
+  let chats = [];
+  try { chats = await api('GET', '/api/chats'); } catch(e) { chats = []; }
+  state.chats = chats;
+  let activeChat = null, messages = [];
+  if (state.activeChatId) {
+    try {
+      const data = await api('GET', `/api/chats/${state.activeChatId}`);
+      activeChat = data.chat; messages = data.messages;
+      state.activeChatMessages = messages;
+    } catch(e) { state.activeChatId = null; }
+  }
+  const userName = state.currentUser.name[0].toUpperCase();
+  const historyHTML = chats.length
+    ? chats.map(c => `
+        <div class="chat-history-item ${activeChat && activeChat.id===c.id?'active':''}" onclick="selectChat(${c.id})">
+          <i class="fas fa-message"></i>
+          <span class="chat-history-name">${c.title}</span>
+          <button class="chat-delete-btn" onclick="deleteChat(event,${c.id})"><i class="fas fa-trash-can"></i></button>
+        </div>`).join('')
+    : `<div class="chat-history-empty"><i class="fas fa-message" style="font-size:20px;margin-bottom:8px;display:block;color:var(--border2)"></i>No saved chats yet</div>`;
+
+  let messagesHTML = '';
+  if (!activeChat) {
+    messagesHTML = `<div class="chat-empty">
+      <div class="chat-empty-icon"><i class="fas fa-message-dots"></i></div>
+      <h3>Start a conversation</h3>
+      <p>Select a chat from the history or create a new one to get started.</p>
+      <button class="btn btn-primary" onclick="openNewChatPrompt()"><i class="fas fa-plus"></i> New Chat</button>
+    </div>`;
+  } else if (messages.length) {
+    messagesHTML = messages.map(m =>
+      `<div class="msg-row ${m.role==='user'?'user':''}">
+        ${m.role==='assistant' ? '<div class="msg-avatar ai">AI</div>' : ''}
+        <div class="msg-bubble ${m.role}">${m.content.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+        ${m.role==='user' ? `<div class="msg-avatar user-av">${userName}</div>` : ''}
+      </div>`).join('');
+  } else {
+    messagesHTML = `<div class="chat-empty">
+      <div class="chat-empty-icon"><i class="fas fa-comment-dots"></i></div>
+      <h3>${activeChat.title}</h3>
+      <p>Send your first message to get the conversation started.</p>
+    </div>`;
+  }
+
+  document.getElementById('view-chat').innerHTML = `
+    <div class="chat-layout">
+      <div class="chat-history">
+        <div class="chat-history-header">
+          <span class="chat-history-title"><i class="fas fa-clock-rotate-left" style="color:var(--accent2);margin-right:6px"></i>History</span>
+          <button class="btn btn-primary btn-sm" onclick="openNewChatPrompt()"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="chat-history-list">${historyHTML}</div>
+      </div>
+      <div class="chat-area">
+        <div class="chat-messages" id="chat-messages">${messagesHTML}</div>
+        ${activeChat ? `
+        <div class="chat-input-area">
+          <div class="chat-input-wrap">
+            <textarea id="msg-input" rows="1" placeholder="Type your message or use the mic…" onkeydown="handleChatKey(event)"></textarea>
+            <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Voice to text">
+              <i class="fas fa-microphone"></i>
+            </button>
+            <button class="send-btn" id="send-btn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="voice-status" id="voice-status"><i class="fas fa-circle" style="font-size:8px"></i> Listening…</div>
+            <div class="save-indicator" id="save-indicator"><i class="fas fa-circle-check"></i> Chat saved automatically</div>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>`;
+
+  setTimeout(() => {
+    const msgs = document.getElementById('chat-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }, 50);
+}
+
+function selectChat(id) { state.activeChatId = id; navigate('chat', id); }
+async function deleteChat(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this chat?')) return;
+  try {
+    await api('DELETE', `/api/chats/${id}`);
+    if (state.activeChatId === id) state.activeChatId = null;
+    renderChat();
+  } catch(err) { alert('Failed to delete: ' + err.message); }
+}
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  const el = e.target;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+async function sendMsg() {
+  const input = document.getElementById('msg-input');
+  const btn   = document.getElementById('send-btn');
+  const msg   = input.value.trim();
+  if (!msg || !state.activeChatId) return;
+  input.value = ''; input.style.height = 'auto';
+  btn.disabled = true;
+  const msgs = document.getElementById('chat-messages');
+  const empty = msgs.querySelector('.chat-empty');
+  if (empty) empty.remove();
+  const userName = state.currentUser.name[0].toUpperCase();
+  const userRow = document.createElement('div');
+  userRow.className = 'msg-row user';
+  userRow.innerHTML = `<div class="msg-bubble user">${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div><div class="msg-avatar user-av">${userName}</div>`;
+  msgs.appendChild(userRow);
+  const typingRow = document.createElement('div');
+  typingRow.className = 'msg-row';
+  typingRow.innerHTML = `<div class="msg-avatar ai">AI</div><div class="msg-bubble assistant"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  msgs.appendChild(typingRow);
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const data = await api('POST', `/api/chats/${state.activeChatId}/send`, { message: msg });
+    typingRow.remove();
+    const aiRow = document.createElement('div');
+    aiRow.className = 'msg-row';
+    aiRow.innerHTML = `<div class="msg-avatar ai">AI</div><div class="msg-bubble assistant">${data.reply.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`;
+    msgs.appendChild(aiRow);
+    msgs.scrollTop = msgs.scrollHeight;
+    const si = document.getElementById('save-indicator');
+    if (si) { si.style.display = 'flex'; setTimeout(() => si.style.display = 'none', 2500); }
+  } catch(err) {
+    typingRow.remove();
+    const errRow = document.createElement('div');
+    errRow.className = 'msg-row';
+    errRow.innerHTML = `<div class="msg-avatar ai">AI</div><div class="msg-bubble assistant">⚠️ Error: ${err.message}</div>`;
+    msgs.appendChild(errRow);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  btn.disabled = false;
+}
+
+/* ══════════════════════════════════════
+   VOICE-TO-TEXT
+══════════════════════════════════════ */
+let recognition = null;
+let isRecording = false;
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('⚠️ Voice input not supported in this browser. Try Chrome or Edge.', 'error');
+    return;
+  }
+  if (isRecording) {
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  const voiceBtn = document.getElementById('voice-btn');
+  const voiceStatus = document.getElementById('voice-status');
+  const input = document.getElementById('msg-input');
+  const originalValue = input.value;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    voiceBtn.classList.add('recording');
+    voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+    voiceStatus.classList.add('show');
+  };
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    let final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    input.value = originalValue + (originalValue && (final || interim) ? ' ' : '') + (final || interim);
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  };
+
+  recognition.onend = () => {
+    stopVoice();
+  };
+
+  recognition.onerror = (e) => {
+    stopVoice();
+    if (e.error !== 'aborted') showToast('Voice error: ' + e.error, 'error');
+  };
+
+  recognition.start();
+}
+
+function stopVoice() {
+  isRecording = false;
+  const voiceBtn = document.getElementById('voice-btn');
+  const voiceStatus = document.getElementById('voice-status');
+  if (voiceBtn) { voiceBtn.classList.remove('recording'); voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>'; }
+  if (voiceStatus) voiceStatus.classList.remove('show');
+  if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+(async () => {
+  initTheme();
+  loadCompanyProfile();
+  try {
+    const user = await api('GET', '/api/me');
+    state.currentUser = user;
+    navigate('dashboard');
+  } catch(e) {
+    navigate('login');
+  }
+})();
+</script>
+</body>
+</html>
