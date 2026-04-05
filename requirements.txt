@@ -28,9 +28,9 @@ tqdm
 pillow
 lxml
 python-docx
-reportlab
-
+reportlab
 certifi
 charset-normalizer
 idna
 urllib3
+
