@@ -1,0 +1,66 @@
+mutation SeedData @transaction @auth(level: USER, insecureReason: "Seed data mutation is only for authenticated users") {
+  user1: user_insert(data: {
+    id: "550e8400-e29b-41d4-a716-446655440001",
+    displayName: "Alice Smith",
+    email: "alice.smith@example.com",
+    photoUrl: "https://example.com/alice.jpg",
+    createdAt: "2023-01-01T10:00:00Z"
+  })
+  user2: user_insert(data: {
+    id: "550e8400-e29b-41d4-a716-446655440002",
+    displayName: "Bob Johnson",
+    email: "bob.johnson@example.com",
+    photoUrl: "https://example.com/bob.jpg",
+    createdAt: "2023-01-02T11:00:00Z"
+  })
+  category1: documentCategory_insert(data: {
+    id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    name: "Legal Documents",
+    description: "Templates for various legal documents.",
+    createdAt: "2023-01-03T12:00:00Z"
+  })
+  category2: documentCategory_insert(data: {
+    id: "b2c3d4e5-f6a7-8901-2345-67890abcdef0",
+    name: "Business Correspondence",
+    description: "Templates for business letters and emails.",
+    createdAt: "2023-01-04T13:00:00Z"
+  })
+  template1: documentTemplate_insert(data: {
+    id: "c3d4e5f6-a7b8-9012-3456-7890abcdef12",
+    name: "NDA Agreement",
+    description: "Standard Non-Disclosure Agreement template.",
+    aiPromptStructure: "Generate a non-disclosure agreement between two parties. Party A: {{partyA_name}}, Party B: {{partyB_name}}. Include clauses for confidentiality and term.",
+    exampleInputs: "{\"partyA_name\": \"Tech Innovations Inc.\", \"partyB_name\": \"Creative Solutions LLC.\"}",
+    categoryId: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    createdAt: "2023-01-05T14:00:00Z"
+  })
+  template2: documentTemplate_insert(data: {
+    id: "d4e5f6a7-b8c9-0123-4567-890abcdef234",
+    name: "Sales Proposal",
+    description: "Template for a sales proposal.",
+    aiPromptStructure: "Draft a sales proposal for product: {{product_name}}, targeting company: {{company_name}}. Highlight benefits and pricing.",
+    exampleInputs: "{\"product_name\": \"Quantum AI Platform\", \"company_name\": \"Global Enterprises\"}",
+    categoryId: "b2c3d4e5-f6a7-8901-2345-67890abcdef0",
+    createdAt: "2023-01-06T15:00:00Z"
+  })
+  userTemplate1: userTemplate_insert(data: {
+    id: "e5f6a7b8-c9d0-1234-5678-90abcdef3456",
+    name: "Custom Project Proposal",
+    description: "My personalized project proposal template.",
+    aiPromptStructure: "Create a detailed project proposal for: {{project_title}} with scope: {{project_scope}}.",
+    userId: "550e8400-e29b-41d4-a716-446655440001",
+    categoryId: "b2c3d4e5-f6a7-8901-2345-67890abcdef0",
+    createdAt: "2023-01-07T16:00:00Z"
+  })
+  generatedDoc1: generatedDocument_insert(data: {
+    id: "f6a7b8c9-d0e1-2345-6789-0abcdef45678",
+    title: "NDA for Project X",
+    generatedText: "This Non-Disclosure Agreement (NDA) is made and entered into...",
+    inputParameters: "{\"partyA_name\": \"Tech Innovations Inc.\", \"partyB_name\": \"Creative Solutions LLC.\"}",
+    format: "PDF",
+    userId: "550e8400-e29b-41d4-a716-446655440001",
+    documentTemplateId: "c3d4e5f6-a7b8-9012-3456-7890abcdef12",
+    createdAt: "2023-01-08T17:00:00Z",
+    updatedAt: "2023-01-08T17:05:00Z"
+  })
+}

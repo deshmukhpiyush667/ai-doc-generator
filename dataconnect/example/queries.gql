@@ -1,0 +1,44 @@
+query ListDocumentCategories @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  documentCategories {
+    id
+    name
+    description
+    createdAt
+  }
+}
+
+query GetDocumentTemplateById($id: UUID!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  documentTemplate(id: $id) {
+    id
+    name
+    category {
+      name
+    }
+    aiPromptStructure
+    exampleInputs
+    createdAt
+  }
+}
+
+query MyGeneratedDocuments @auth(level: USER) {
+  generatedDocuments(where: {userId: {eq_expr: "auth.uid"}}) {
+    id
+    title
+    generatedText
+    format
+    createdAt
+    documentTemplate {
+      name
+    }
+  }
+}
+
+mutation CreateUserTemplate($name: String!, $aiPromptStructure: String!, $categoryId: UUID) @auth(level: USER) {
+  userTemplate_insert(data: {
+    userId_expr: "auth.uid",
+    name: $name,
+    aiPromptStructure: $aiPromptStructure,
+    categoryId: $categoryId,
+    createdAt_expr: "request.time"
+  })
+}

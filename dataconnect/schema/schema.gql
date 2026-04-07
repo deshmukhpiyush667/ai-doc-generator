@@ -1,0 +1,42 @@
+type User @table {
+  displayName: String!
+  email: String
+  photoUrl: String
+  createdAt: Timestamp!
+}
+
+type DocumentTemplate @table {
+  name: String!
+  category: DocumentCategory!
+  description: String
+  aiPromptStructure: String!
+  exampleInputs: String # Assuming exampleInputs can be stored as a string, e.g., JSON
+  createdAt: Timestamp!
+}
+
+type GeneratedDocument @table {
+  user: User!
+  documentTemplate: DocumentTemplate
+  title: String!
+  generatedText: String!
+  inputParameters: String # Assuming inputParameters can be stored as a string, e.g., JSON
+  format: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type UserTemplate @table {
+  user: User!
+  name: String!
+  description: String
+  category: DocumentCategory
+  aiPromptStructure: String!
+  baseTemplateId: UUID # References DocumentTemplate's UUID
+  createdAt: Timestamp!
+}
+
+type DocumentCategory @table {
+  name: String!
+  description: String
+  createdAt: Timestamp!
+}
